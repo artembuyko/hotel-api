@@ -7,6 +7,7 @@ import com.hotel.hotel_service.Service.HotelServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -42,6 +43,11 @@ public class HotelControllers {
     @ResponseStatus(HttpStatus.CREATED)
     public HotelSummaryResponse createHotel(@Valid @RequestBody HotelRequest request) {
         return service.createHotel(request);
+    }
 
+    @PostMapping("/{id}/amenities")
+    public ResponseEntity<Void> addAmenities(@PathVariable Long id, @RequestBody List<String> amenityNames) {
+        service.addAmenities(id, amenityNames);
+        return ResponseEntity.ok().build();
     }
 }

@@ -14,8 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.server.ResponseStatusException;
-
+import com.hotel.hotel_service.Exceptions.HotelNotFoundException;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,7 +35,7 @@ class HotelServiceTest {
     private HotelMapping hotelMapper;
 
     @InjectMocks
-    private HotelService hotelService;
+    private HotelServiceImpl hotelService;
 
     private Hotel hotel;
     private HotelSummaryResponse summaryDTO;
@@ -149,12 +148,8 @@ class HotelServiceTest {
         when(hotelRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> hotelService.getHotelById(99L))
-                .isInstanceOf(ResponseStatusException.class)
-                .satisfies(ex -> {
-                    ResponseStatusException rse = (ResponseStatusException) ex;
-                    assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-                    assertThat(rse.getReason()).contains("Hotel not found");
-                });
+                .isInstanceOf(HotelNotFoundException.class)
+                .hasMessageContaining("отель с таким айди не найден");
         verify(hotelRepository, times(1)).findById(99L);
     }
 
@@ -214,11 +209,8 @@ class HotelServiceTest {
         when(hotelRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> hotelService.addAmenities(99L, List.of("WiFi")))
-                .isInstanceOf(ResponseStatusException.class)
-                .satisfies(ex -> {
-                    ResponseStatusException rse = (ResponseStatusException) ex;
-                    assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-                });
+                .isInstanceOf(HotelNotFoundException.class)
+                .hasMessageContaining("отель с таким айди не найден");
         verify(amenityRepository, never()).findByName(any());
         verify(amenityRepository, never()).save(any());
     }
@@ -297,7 +289,7 @@ class HotelServiceTest {
 
     @Test
     void getHistogram_ForCountry_ShouldReturnMap() {
-        when(hotelRepository.countByCountry()).thenReturn((List<Object[]>) List.of(new Object[]{"Belarus", 3L}));
+        when(hotelRepository.countByCountry()).thenReturn(Collections.singletonList(new Object[]{"Belarus", 3L}));
         Map<String, Long> result = hotelService.getHistogram("country");
         assertThat(result).containsEntry("Belarus", 3L);
     }

@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@AllArgsConstructor
 public class HotelServiceImpl implements HotelService{
 
     private final HotelMapping mapping;

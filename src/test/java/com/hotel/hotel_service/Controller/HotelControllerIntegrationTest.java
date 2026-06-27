@@ -1,6 +1,6 @@
 package com.hotel.hotel_service.Controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.hotel.hotel_service.Models.DTO.AddressDTO;
 import com.hotel.hotel_service.Models.DTO.ArrivalTimeDTO;
 import com.hotel.hotel_service.Models.DTO.ContactsDTO;
@@ -29,7 +29,7 @@ class HotelControllerIntegrationTest {
 
     @Test
     void shouldReturnAllHotels() throws Exception {
-        mockMvc.perform(get("/property-view/hotels"))
+        mockMvc.perform(get("/hotels"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
@@ -38,6 +38,7 @@ class HotelControllerIntegrationTest {
     void shouldCreateAndRetrieveHotel() throws Exception {
         HotelRequest request = new HotelRequest();
         request.setName("Integration Hotel");
+        request.setDescription("Test description");
         request.setBrand("TestBrand");
         AddressDTO address = new AddressDTO();
         address.setHouseNumber("1");
@@ -52,9 +53,10 @@ class HotelControllerIntegrationTest {
         request.setContacts(contacts);
         ArrivalTimeDTO arrival = new ArrivalTimeDTO();
         arrival.setCheckIn("14:00");
+        arrival.setCheckOut("12:00");
         request.setArrivalTime(arrival);
 
-        String response = mockMvc.perform(post("/property-view/hotels")
+        String response = mockMvc.perform(post("/hotels")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -63,19 +65,49 @@ class HotelControllerIntegrationTest {
 
         Long id = objectMapper.readTree(response).get("id").asLong();
 
-        mockMvc.perform(get("/property-view/hotels/" + id))
+        mockMvc.perform(get("/hotels/" + id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Integration Hotel"));
     }
 
     @Test
     void shouldAddAmenities() throws Exception {
-        mockMvc.perform(post("/property-view/hotels/1/amenities")
+        HotelRequest request = new HotelRequest();
+        request.setName("Amenity Hotel");
+        request.setDescription("For amenities test");
+        request.setBrand("TestBrand");
+        AddressDTO address = new AddressDTO();
+        address.setHouseNumber("2");
+        address.setStreet("Another St");
+        address.setCity("TestCity");
+        address.setCountry("TestCountry");
+        address.setPostCode("456");
+        request.setAddress(address);
+        ContactsDTO contacts = new ContactsDTO();
+        contacts.setPhone("456");
+        contacts.setEmail("amenity@test.com");
+        request.setContacts(contacts);
+        ArrivalTimeDTO arrival = new ArrivalTimeDTO();
+        arrival.setCheckIn("15:00");
+        arrival.setCheckOut("11:00");
+        request.setArrivalTime(arrival);
+
+        String response = mockMvc.perform(post("/hotels")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").exists())
+                .andReturn().getResponse().getContentAsString();
+
+        Long id = objectMapper.readTree(response).get("id").asLong();
+
+        mockMvc.perform(post("/hotels/" + id + "/amenities")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("[\"Free WiFi\", \"Pool\"]"))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(get("/property-view/hotels/1"))
+        mockMvc.perform(get("/hotels/" + id))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.amenities").isArray())
                 .andExpect(jsonPath("$.amenities").value(org.hamcrest.Matchers.hasItem("Pool")));
     }
