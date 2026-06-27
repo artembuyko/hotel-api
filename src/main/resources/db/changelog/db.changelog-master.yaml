@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: migrations/001-create-hotel-tables.sql
+      relativeToChangelogFile: true
+  - include:
+      file: migrations/002-insert-test-data.sql
+      relativeToChangelogFile: true
